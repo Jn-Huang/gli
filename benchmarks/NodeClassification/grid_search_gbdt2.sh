@@ -1,0 +1,15 @@
+python train_gbdt.py --dataset cora  --model lightgbm > output
+python train_gbdt.py --dataset citeseer  --model lightgbm >> output
+python train_gbdt.py --dataset pubmed  --model lightgbm >> output
+python train_gbdt.py --dataset texas  --model lightgbm >> output
+python train_gbdt.py --dataset cornell  --model lightgbm >> output
+python train_gbdt.py --dataset wisconsin  --model lightgbm >> output
+python train_gbdt.py --dataset actor  --model lightgbm >> output
+python train_gbdt.py --dataset squirrel  --model lightgbm >> output
+python train_gbdt.py --dataset chameleon  --model lightgbm >> output
+python train_gbdt.py --dataset arxiv-year  --model lightgbm >> output
+python train_gbdt.py --dataset snap-patents  --model lightgbm >> output
+python train_gbdt.py --dataset penn94  --model lightgbm >> output
+python train_gbdt.py --dataset pokec  --model lightgbm >> output
+python train_gbdt.py --dataset genius  --model lightgbm >> output
+python train_gbdt.py --dataset twitch-gamers  --model lightgbm >> output

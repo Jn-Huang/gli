@@ -157,7 +157,7 @@ def load_config_file(path):
     with open(path, "r", encoding="utf-8") as stream:
         try:
             parsed_yaml = yaml.full_load(stream)
-            print(parsed_yaml)
+            # print(parsed_yaml)
             return parsed_yaml
         except yaml.YAMLError as exc:
             print(exc)

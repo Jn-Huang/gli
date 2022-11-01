@@ -1,0 +1,15 @@
+python train_gbdt.py --dataset cora  --model catboost > output
+python train_gbdt.py --dataset citeseer  --model catboost >> output
+python train_gbdt.py --dataset pubmed  --model catboost >> output
+python train_gbdt.py --dataset texas  --model catboost >> output
+python train_gbdt.py --dataset cornell  --model catboost >> output
+python train_gbdt.py --dataset wisconsin  --model catboost >> output
+python train_gbdt.py --dataset actor  --model catboost >> output
+python train_gbdt.py --dataset squirrel  --model catboost >> output
+python train_gbdt.py --dataset chameleon  --model catboost >> output
+python train_gbdt.py --dataset arxiv-year  --model catboost >> output
+python train_gbdt.py --dataset snap-patents  --model catboost >> output
+python train_gbdt.py --dataset penn94  --model catboost >> output
+python train_gbdt.py --dataset pokec  --model catboost >> output
+python train_gbdt.py --dataset genius  --model catboost >> output
+python train_gbdt.py --dataset twitch-gamers  --model catboost >> output

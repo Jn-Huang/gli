@@ -10,6 +10,7 @@ import json
 import time
 import datetime
 from collections import defaultdict as ddict
+import torch
 
 import numpy as np
 from sklearn.model_selection import ParameterGrid
@@ -58,6 +59,14 @@ class RunModel:
         self.x = features
         self.y = labels
 
+        if self.args.dataset == "texas":
+            self.x = torch.cat((self.x, self.x[0].unsqueeze(0)), 0)
+            # print(self.y.shape)
+            self.y = torch.cat((self.y, torch.tensor([1])), 0)
+            train_mask = torch.cat((train_mask, torch.tensor([True])), 0)
+            test_mask = torch.cat((test_mask, torch.tensor([False])), 0)
+            val_mask = torch.cat((val_mask, torch.tensor([False])), 0)
+
         self.masks = {"0": {"train": train_mask,
                             "val": val_mask,
                             "test": test_mask}}
@@ -69,26 +78,21 @@ class RunModel:
                                 {datetime.datetime.now().strftime('%d_%m')}"
 
         self.read_input()
-        print("Save to folder:", self.save_folder)
+        # print("Save to folder:", self.save_folder)
 
     def run_one_model(self, config_fn, model_name):
         """Run single model."""
-        print(config_fn)
-        # self.config = OmegaConf.load(config_fn)
-        # print(type(self.config))
-        # print(self.config)
-        # grid = ParameterGrid(dict(self.config.hp))
+        # print(config_fn)
 
         self.config = load_config_file(config_fn)
-        print(type(self.config))
-        print(self.config)
         grid = ParameterGrid(self.config["hp"])
 
+        print(self.args.dataset)
         for ps in grid:
-            print("hyper params: ", ps)
+            # print("hyper params: ", ps)
             param_string = "".join([f"-{key}{ps[key]}" for key in ps])
             exp_name = f"{model_name}{param_string}"
-            print(f"\nSeed {self.seed} RUNNING:{exp_name}")
+            # print(f"\nSeed {self.seed} RUNNING:{exp_name}")
 
             runs = []
             runs_custom = []
@@ -122,7 +126,7 @@ class RunModel:
                                             list(map(np.mean,
                                                      zip(*runs_custom))),
                                             np.mean(times))
-
+        
     def define_model(self, model_name, ps):
         """Define model."""
         if model_name == "catboost":
@@ -194,14 +198,14 @@ class RunModel:
     def run(self,
             save_folder: str = None,
             task: str = "NodeClassification",
-            repeat_exp: int = 1,
-            max_seeds: int = 5,
+            repeat_exp: int = 5,
+            max_seeds: int = 1,
             ):
         """Run the model."""
         start2run = time.time()
         self.repeat_exp = repeat_exp
         self.max_seeds = max_seeds
-        print(self.args.dataset, task, repeat_exp, max_seeds)
+        # print(self.args.dataset, task, repeat_exp, max_seeds)
 
         self.task = task
         self.save_folder = save_folder
@@ -209,7 +213,7 @@ class RunModel:
 
         self.seed_results = {}
         for ix, seed in enumerate(self.masks):
-            print(f"{self.args.dataset} Seed {seed}")
+            # print(f"{self.args.dataset} Seed {seed}")
             self.seed = seed
 
             self.create_save_folder(seed)
@@ -223,14 +227,14 @@ class RunModel:
             if ix+1 >= max_seeds:
                 break
 
-        print(f"Finished {self.args.dataset}: {time.time() - start2run} sec.")
+        # print(f"Finished {self.args.dataset}: {time.time() - start2run} sec.")
 
 
 def main():
     """Load dataset and train the model."""
     # Load cmd line args
     args = parse_args()
-    print(args)
+    # print(args)
     # Load config file
     model_cfg = load_config_file(args.model_cfg)
     train_cfg = load_config_file(args.train_cfg)

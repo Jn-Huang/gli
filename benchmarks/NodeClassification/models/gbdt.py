@@ -11,6 +11,7 @@ from sklearn.metrics import mean_squared_error, accuracy_score, r2_score
 import numpy as np
 from collections import defaultdict as ddict
 import lightgbm
+from random import randint
 
 
 class GBDTCatBoost:
@@ -41,15 +42,18 @@ class GBDTCatBoost:
             else ["Accuracy"]
         # ["Accuracy", "AUC", "Precision", "Recall", "F1", "MCC", "R2"],
 
-        print("loss function: ", self.loss_function)
-        print("metric: ", self.custom_metrics)
+        # print("loss function: ", self.loss_function)
+        # print("metric: ", self.custom_metrics)
+
+        # generate a random number for model
+        seed = randint(1, 1000)
 
         self.model = catboost_model_obj(iterations=num_epochs,
                                         depth=self.depth,
                                         learning_rate=self.learning_rate,
                                         loss_function=self.loss_function,
                                         custom_metric=self.custom_metrics,
-                                        random_seed=0,
+                                        random_seed=seed,
                                         early_stopping_rounds=patience,
                                         l2_leaf_reg=self.l2_leaf_reg,
                                         max_bin=self.max_bin,
@@ -102,11 +106,7 @@ class GBDTCatBoost:
         x_train, y_train, x_val, y_val, x_test, y_test = \
             self.train_val_test_split(x, y, train_mask, val_mask, test_mask)
         self.init_model(num_epochs, patience)
-
         start = time.time()
-        # print("type(x_train)", type(x_train))
-        # print("type(y_train)", type(y_train))
-        # print("cat_features", cat_features)
         pool = Pool(x_train.numpy(), y_train.numpy())
         eval_set = [(x_val.numpy(), y_val.numpy()),
                     (x_test.numpy(), y_test.numpy())]
@@ -114,16 +114,18 @@ class GBDTCatBoost:
         finish = time.time()
 
         num_trees = self.model.tree_count_
-        print(f"Finished training. Total time: {finish - start:.2f} |\
-                Number of trees: {num_trees:d} |\
-                Time per tree: {(time.time() - start )/num_trees:.2f}")
+        # print(f"Finished training. Total time: {finish - start:.2f} |\
+        #         Number of trees: {num_trees:d} |\
+        #         Time per tree: {(time.time() - start )/num_trees:.2f}")
 
         metrics = self.get_metrics()
         min_metric, min_val_epoch = self.get_test_metric(metrics, metric_name)
         if loss_fn:
             self.save_metrics(metrics, loss_fn)
-        print(f"Best {metric_name} at iteration {min_val_epoch}:\
-                {min_metric[0]:.3f}/{min_metric[1]:.3f}/{min_metric[2]:.3f}")
+        # print(f"Best {metric_name} at iteration {min_val_epoch}:\
+        #         {min_metric[0]:.3f}/{min_metric[1]:.3f}/{min_metric[2]:.3f}")
+        # ONLY OUTPUT TEST ACC FOR BENCHMARKING
+        print(min_metric[2])
         return metrics
 
     def predict(self, x_test, y_test):
@@ -164,6 +166,7 @@ class GBDTLGBM:
 
     def init_model(self):
         """Initiate model."""
+        seed = randint(1, 10000)
         self.parameters = {
             "objective": "regression" if self.task == "regression"
             else "multiclass",
@@ -177,11 +180,12 @@ class GBDTLGBM:
             "lambda_l1": self.lambda_l1,
             "lambda_l2": self.lambda_l2,
             # "num_threads": 1,
-            # "feature_fraction": 0.9,
+            "feature_fraction": 0.9,
             # "bagging_fraction": 0.8,
             # "bagging_freq": 5,
-            "verbose": 1,
+            "verbose": -1,
             # "device_type": "gpu"
+            "seed": seed
         }
         self.evals_result = {}
 
@@ -238,9 +242,15 @@ class GBDTLGBM:
         self.init_model()
 
         start = time.time()
-        train_data = lightgbm.Dataset(x_train, label=y_train)
-        val_data = lightgbm.Dataset(x_val, label=y_val)
-        test_data = lightgbm.Dataset(x_test, label=y_test)
+        # seed = randint(1, 1000)
+        train_data = lightgbm.Dataset(x_train, label=y_train,
+                                      params={'verbose': -1,},
+                                    #   "data_random_seed": seed},
+                                      free_raw_data=False)
+        val_data = lightgbm.Dataset(x_val, label=y_val,
+                                    params={'verbose': -1}, free_raw_data=False)
+        test_data = lightgbm.Dataset(x_test, label=y_test,
+                                     params={'verbose': -1}, free_raw_data=False)
         valid_sets = [train_data, val_data, test_data]
         self.model = lightgbm.train(params=self.parameters,
                                     train_set=train_data,
@@ -250,16 +260,18 @@ class GBDTLGBM:
                                     evals_result=self.evals_result,
                                     feval=self.r2 if self.task == "regression"
                                     else self.accuracy,
-                                    verbose_eval=1)
+                                    verbose_eval=False)
         finish = time.time()
-        print(f"Finished training. Total time: {finish - start:.2f}")
+        # print(f"Finished training. Total time: {finish - start:.2f}")
 
         metrics = self.get_metrics()
         min_metric, min_val_epoch = self.get_test_metric(metrics, metric_name)
         if loss_fn:
             self.save_metrics(metrics, loss_fn)
-        print(f"Best {metric_name} at iteration {min_val_epoch}:\
-                {min_metric[0]:.3f}/{min_metric[1]:.3f}/{min_metric[2]:.3f}")
+        # print(f"Best {metric_name} at iteration {min_val_epoch}:\
+        #         {min_metric[0]:.3f}/{min_metric[1]:.3f}/{min_metric[2]:.3f}")
+        # ONLY OUTPUT TEST ACC FOR BENCHMARKING
+        print(min_metric[2])
         return metrics
 
     def predict(self, x_test, y_test):
