@@ -1,7 +1,7 @@
 import statistics
 acc_list = []
 
-with open('output_catboost20221101', 'r') as f:
+with open('output', 'r') as f:
     lines = (line.strip() for line in f if (line and not line[0].islower()))
     acc_list = [float(line) for line in lines]
 
